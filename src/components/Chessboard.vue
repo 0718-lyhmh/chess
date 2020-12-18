@@ -124,11 +124,11 @@
             item = item.substring(0, k) + move.substring(2, 4) + item.substring(k + 2, item.length)
             break
           }
+          this.chessStatus = item
+          this.operation = ""
+          this.chessList = []
+          this.drawChess()
         }
-        this.chessStatus = item
-        this.operation = ""
-        this.chessList = []
-        this.drawChess()
 
     },
       draw(x,y){
