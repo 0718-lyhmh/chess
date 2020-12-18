@@ -18,7 +18,7 @@
         chessStatus:"0919293949596979891777062646668600102030405060708012720323436383",
         chessList:[],
         operation:"",
-        turn:"red"  //轮到谁
+        turn:"red" , //轮到谁
       }
     },
     methods:{
@@ -58,27 +58,33 @@
                 if (this.chessList[j].x === x2 && this.chessList[j].y === y2 && this.legal(this.chessList[j].name, x2, y2, x1, y1)) {
                   this.operation += x1.toString() + y1.toString()
                   console.log(this.operation)
+                  //============发GET请求时：发的状态应该是走之后的
+                  //============发POST请求时：发的状态应该是走之前的
+                  let tmpOperation = this.operation
+                  let tmpChessStatus = this.chessStatus
+
                   this.fresh(this.operation)
                   //走棋合法，移动相应的棋子
                   if(this.turn === "red"){  //轮到黑棋，向api发送请求
                     this.turn = "black"
                     axios.get('/chess/'+ this.chessStatus).then(res=>{
-                      if(res.data.status===200){ //返回成功，刷新棋局状态
+                      if(res.status===200){ //返回成功，刷新棋局状态
                         this.operation = res.data.move
                         this.fresh(this.operation)
                         this.turn = "red"
                       }
-                      else if(res.data.status === 204){
+                      else if(res.status === 204){
                         this.turn = "black"   //没有返回动作，轮到黑棋下
                       }
                     })
                   }
-                  else{    //玩家手动帮黑棋下，调用api让机器学习动作
+                  else if(this.turn==='black'){    //玩家手动帮黑棋下，调用api让机器学习动作
                     this.turn = "red"
-                    let form = new FormData()
-                    form.set('state',this.chessStatus)
-                    form.set('move',this.operation)
-                    axios.post('/chess/',form)
+                  //   //==================请求的格式错了，不能用form data
+                  //   // let form = new FormData()
+                  //   // form.set('state',this.chessStatus)
+                  //   // form.set('move',this.operation)
+                    axios.post('/chess/'+tmpChessStatus+'/'+tmpOperation)
                   }
                 }
               }
@@ -89,19 +95,42 @@
       },
     fresh (move){
       let item =  this.chessStatus
-      for(let k=0; k<item.length; k=k+2)
-      {
-        if(item.charAt(k)===move.charAt(0) && item.charAt(k+1)===move.charAt(1))
-        {
-          item=item.substring(0,k)+move.substring(2,4)+item.substring(k+2,item.length)
-          console.log(item)
-          break
+      let isRestart = false
+      if(this.isExist(parseInt(move.charAt(2)),parseInt(move.charAt(3)))){
+        for(let k=0; k<item.length; k=k+2) {
+        //因为前面已经判断过x1,y1不在相应颜色的棋子里，如果现在存在，只能是对方的棋子，即吃掉棋子,将对方棋子置为99
+          if(item.charAt(k)===move.charAt(2) && item.charAt(k+1)===move.charAt(3))
+          {
+            item=item.substring(0,k)+"99"+item.substring(k+2,item.length)
+            // console.log(this.chessStatus)
+            if(this.chessList[k/2].name === "帅"){
+              alert("很遗憾，你输了!")
+              isRestart = true
+              this.restart()
+            }
+            else if(this.chessList[k/2].name === "将"){
+              alert("恭喜你，你赢了!")
+              isRestart = true
+              this.restart()
+            }
+            break
+          }
         }
       }
-      this.chessStatus = item
-      this.operation = ""
-      this.chessList = []
-      this.drawChess()
+      if(!isRestart){
+        for(let k=0; k<item.length; k=k+2) {
+          if (item.charAt(k) === move.charAt(0) && item.charAt(k + 1) === move.charAt(1)) {
+            item = item.substring(0, k) + move.substring(2, 4) + item.substring(k + 2, item.length)
+            console.log(item)
+            break
+          }
+        }
+
+        this.chessStatus = item
+        this.operation = ""
+        this.chessList = []
+        this.drawChess()
+      }
     },
       draw(x,y){
         let cvs = document.getElementById("myCanvas")
@@ -123,25 +152,24 @@
           line(50+x*50-20,50+y*50+20,50+x*50-20,50+y*50+10)
           line(50+x*50-20,50+y*50+20,50+x*50-10,50+y*50+20)
       },
-
+      isExist (x,y) {
+        for(let j=0; j<this.chessList.length; j++)
+        {
+          if(this.chessList[j].x===x&&this.chessList[j].y===y)return true
+        }
+        return false;
+      },
       legal (name,x1,y1,x2,y2) {
         let _this = this
         let middle = function(x1,y1,x2,y2) {
           let count = 0
-          let __this = _this
-          let isExist = function (x,y) {
-            for(let j=0; j<__this.chessList.length; j++)
-            {
-              if(__this.chessList[j].x===x&&__this.chessList[j].y===y)return true
-            }
-            return false;
-          }
+
           if(x1===x2){    //车，炮直走
             let max = Math.max(y1,y2)
             let min = Math.min(y1,y2)
             for(let i=min+1; i<max; i++)
             {
-              if(isExist(x1,i))count++
+              if(_this.isExist(x1,i))count++
             }
           }
           else if(y1===y2){ //车,炮,直走
@@ -149,7 +177,7 @@
             let min = Math.min(x1,x2)
             for(let i=min+1; i<max; i++)
             {
-              if(isExist(i,y1))count++
+              if(_this.isExist(i,y1))count++
             }
           }
           else if(Math.abs(x1 - x2) === Math.abs(y1 = y2)){ //象，相斜走
@@ -157,11 +185,11 @@
             let minX = Math.min(x1,x2)
             let minY = Math.min(y1,y2)
             for(let i = minX+1,j=minY+1; i<maxX ; i++,j++)
-              if(isExist(i,j))count++
+              if(_this.isExist(i,j))count++
           }
           else {   //马直走再斜走，判断直走时是否有棋子
-            if(Math.abs(x1 - x2) === 2 && isExist(Math.min(x1,x2)+1,y1))count++
-            if(Math.abs(y1 - y2) === 2 && isExist(x1,Math.min(y1,y2)+1))count++
+            if(Math.abs(x1 - x2) === 2 && _this.isExist(Math.min(x1,x2)+1,y1))count++
+            if(Math.abs(y1 - y2) === 2 && _this.isExist(x1,Math.min(y1,y2)+1))count++
           }
           return count
         }
@@ -172,10 +200,10 @@
         if(name==="相")return ((y2>=5&&y2<=9)&&(Math.abs(x1 - x2) === 2 && Math.abs(y1 - y2) === 2)&&middle(x1,y1,x2,y2)===0)
         if(name==="象")return ((y2>=0&&y2<=4)&&(Math.abs(x1 - x2) === 2 && Math.abs(y1 - y2) === 2)&&middle(x1,y1,x2,y2)===0)
         if(name==="车")return ((x1===x2||y1===y2)&&middle(x1,y1,x2,y2)===0)
-        if(name==="炮")return ((x1===x2||y1===y2)&&(middle(x1,y1,x2,y2)===0||middle(x1,y1,x2,y2)===1))
+        if(name==="炮")return ((x1===x2||y1===y2)&&((middle(x1,y1,x2,y2)===0&&this.isExist(x2,y2)===false)||(middle(x1,y1,x2,y2)===1)&&this.isExist(x2,y2)))
         if(name==="马")return ((Math.abs(x1 - x2) + Math.abs(y1 - y2) === 3)&&middle(x1,y1,x2,y2)===0)
-        if(name==="兵")return ((y1>=5&&y1<=6&&y1-y2===1)||(y1<5&&(y1-y2===1||Math.abs(x1-x2)===1)))
-        if(name==="卒")return ((y1>=3&&y1<=4&&y2-y1===1)||(y1>4&&(y2-y1===1||Math.abs(x1-x2)===1)))
+        if(name==="兵")return ((y1>=5&&y1<=6&&y1-y2===1&&x1===x2)||(y1<5&&((y1-y2===1&&x1===x2)||(y1===y2&&Math.abs(x1-x2)===1))))
+        if(name==="卒")return ((y1>=3&&y1<=4&&y2-y1===1&&x1===x2)||(y1>4&&(y2-y1===1&&x1===x2||(y1===y2&&Math.abs(x1-x2)===1))))
       },
 
       chess (x,y,name,type){
@@ -214,6 +242,7 @@
         let name2 = ["车","马","象","士","将","士","象","马","车","炮","炮","卒","卒","卒","卒","卒"]
         this.chessList = []
         this.initStatus(red,"red",name1)
+
         this.initStatus(black,"black",name2)
         for(let i=0; i< this.chessList.length; i++)
         {
@@ -224,6 +253,8 @@
         //重置数据为初始化状态
         this.chessStatus="0919293949596979891777062646668600102030405060708012720323436383"
         this.chessList = []
+        this.turn='red'
+        console.log(this.chessStatus)
         this.drawChess()//渲染棋子
       }
       },
