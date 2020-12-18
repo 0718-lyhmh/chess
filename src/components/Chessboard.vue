@@ -19,6 +19,7 @@
         chessList:[],
         operation:"",
         turn:"red" , //轮到谁
+        isOver : false
       }
     },
     methods:{
@@ -63,9 +64,10 @@
                   let tmpOperation = this.operation
                   let tmpChessStatus = this.chessStatus
 
-                  this.fresh(this.operation)
+                   this.fresh(this.operation)
+
                   //走棋合法，移动相应的棋子
-                  if(this.turn === "red"){  //轮到黑棋，向api发送请求
+                  if(this.turn === "red"&&!this.isOver){  //轮到黑棋，向api发送请求
                     this.turn = "black"
                     axios.get('/chess/'+ this.chessStatus).then(res=>{
                       if(res.status===200){ //返回成功，刷新棋局状态
@@ -86,6 +88,9 @@
                   //   // form.set('move',this.operation)
                     axios.post('/chess/'+tmpChessStatus+'/'+tmpOperation)
                   }
+                  else if(this.isOver){
+                    this.restart()
+                  }
                 }
               }
               if (j === this.chessList.length) this.operation = ""
@@ -95,7 +100,6 @@
       },
     fresh (move){
       let item =  this.chessStatus
-      let isRestart = false
       if(this.isExist(parseInt(move.charAt(2)),parseInt(move.charAt(3)))){
         for(let k=0; k<item.length; k=k+2) {
         //因为前面已经判断过x1,y1不在相应颜色的棋子里，如果现在存在，只能是对方的棋子，即吃掉棋子,将对方棋子置为99
@@ -105,32 +109,27 @@
             // console.log(this.chessStatus)
             if(this.chessList[k/2].name === "帅"){
               alert("很遗憾，你输了!")
-              isRestart = true
-              this.restart()
+              this.isOver = true
             }
             else if(this.chessList[k/2].name === "将"){
               alert("恭喜你，你赢了!")
-              isRestart = true
-              this.restart()
+              this.isOver = true
             }
             break
           }
         }
       }
-      if(!isRestart){
         for(let k=0; k<item.length; k=k+2) {
           if (item.charAt(k) === move.charAt(0) && item.charAt(k + 1) === move.charAt(1)) {
             item = item.substring(0, k) + move.substring(2, 4) + item.substring(k + 2, item.length)
-            console.log(item)
             break
           }
         }
-
         this.chessStatus = item
         this.operation = ""
         this.chessList = []
         this.drawChess()
-      }
+
     },
       draw(x,y){
         let cvs = document.getElementById("myCanvas")
@@ -163,7 +162,6 @@
         let _this = this
         let middle = function(x1,y1,x2,y2) {
           let count = 0
-
           if(x1===x2){    //车，炮直走
             let max = Math.max(y1,y2)
             let min = Math.min(y1,y2)
@@ -180,7 +178,7 @@
               if(_this.isExist(i,y1))count++
             }
           }
-          else if(Math.abs(x1 - x2) === Math.abs(y1 = y2)){ //象，相斜走
+          else if(Math.abs(x1 - x2) === Math.abs(y1 - y2)){ //象，相斜走
             let maxX = Math.max(x1,x2)
             let minX = Math.min(x1,x2)
             let minY = Math.min(y1,y2)
@@ -188,13 +186,22 @@
               if(_this.isExist(i,j))count++
           }
           else {   //马直走再斜走，判断直走时是否有棋子
-            if(Math.abs(x1 - x2) === 2 && _this.isExist(Math.min(x1,x2)+1,y1))count++
-            if(Math.abs(y1 - y2) === 2 && _this.isExist(x1,Math.min(y1,y2)+1))count++
+            if(x1 - x2 === 2 && _this.isExist(x1-1,y1))count++
+            if(x1 - x2 === -2 && _this.isExist(x1+1,y1))count++
+            if(y1 - y2 === 2 && _this.isExist(x1,y1-1))count++
+            if(y1 - y2 === -2 && _this.isExist(x1,y1+1))count++
           }
           return count
         }
-        if(name==="帅")return ((x2>=3&&x2<=5)&&(y2>=7&&y2<=9)&&((Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) || (Math.abs(y1 - y2) === 1 && Math.abs(x1 - x2) === 0)));
-        if(name==="将") return ((x2>=3&&x2<=5)&&(y2>=0&&y2<=2)&&((Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) || (Math.abs(y1 - y2) === 1 && Math.abs(x1 - x2) === 0)));
+        let isHeader = function (x,y) {
+          for(let i=0; i<_this.chessList.length; i++){
+            if(_this.chessList[i].x === x && _this.chessList[i].y===y && (_this.chessList[i].name==="帅"||_this.chessList[i].name==="将"))
+              return true
+          }
+          return false
+        }
+        if(name==="帅")return (((x2>=3&&x2<=5)&&(y2>=7&&y2<=9)&&((Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) || (Math.abs(y1 - y2) === 1 && Math.abs(x1 - x2) === 0)))||(isHeader(x2,y2)&&middle(x1,y1,x2,y2)===0) );
+        if(name==="将") return (((x2>=3&&x2<=5)&&(y2>=0&&y2<=2)&&((Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) || (Math.abs(y1 - y2) === 1 && Math.abs(x1 - x2) === 0))) || (isHeader(x2,y2)&&middle(x1,y1,x2,y2)===0));
         if(name==="士") return ((x2>=3&&x2<=5)&&(y2>=0&&y2<=2)&&(Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 1))
         if(name==="仕") return ((x2>=3&&x2<=5)&&(y2>=7&&y2<=9)&&(Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 1))
         if(name==="相")return ((y2>=5&&y2<=9)&&(Math.abs(x1 - x2) === 2 && Math.abs(y1 - y2) === 2)&&middle(x1,y1,x2,y2)===0)
@@ -253,8 +260,8 @@
         //重置数据为初始化状态
         this.chessStatus="0919293949596979891777062646668600102030405060708012720323436383"
         this.chessList = []
-        this.turn='red'
-        console.log(this.chessStatus)
+        this.turn="red"
+        this.isOver = false
         this.drawChess()//渲染棋子
       }
       },
