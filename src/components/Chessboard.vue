@@ -67,7 +67,7 @@
                    this.fresh(this.operation)
 
                   //走棋合法，移动相应的棋子
-                  if(this.turn === "red"&&!this.isOver){  //轮到黑棋，向api发送请求
+                  if(this.turn === "red"&&this.isOver===false){  //轮到黑棋，向api发送请求
                     this.turn = "black"
                     axios.get('/chess/'+ this.chessStatus).then(res=>{
                       if(res.status===200){ //返回成功，刷新棋局状态
@@ -125,12 +125,11 @@
             item = item.substring(0, k) + move.substring(2, 4) + item.substring(k + 2, item.length)
             break
           }
+        }
           this.chessStatus = item
           this.operation = ""
           this.chessList = []
-          this.drawChess()
-        }
-
+      this.drawChess()
     },
       draw(x,y){
         let cvs = document.getElementById("myCanvas")
