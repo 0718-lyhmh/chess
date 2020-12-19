@@ -76,6 +76,7 @@
                         this.turn = "red"
                       }
                       else if(res.status === 204){
+                        alert("机器不会下了，请你教教它好吗？")
                         this.turn = "black"   //没有返回动作，轮到黑棋下
                       }
                     })
