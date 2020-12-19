@@ -200,8 +200,8 @@
           }
           return false
         }
-        if(name==="帅")return (((x2>=3&&x2<=5)&&(y2>=7&&y2<=9)&&((Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) || (Math.abs(y1 - y2) === 1 && Math.abs(x1 - x2) === 0)))||(isHeader(x2,y2)&&middle(x1,y1,x2,y2)===0) );
-        if(name==="将") return (((x2>=3&&x2<=5)&&(y2>=0&&y2<=2)&&((Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) || (Math.abs(y1 - y2) === 1 && Math.abs(x1 - x2) === 0))) || (isHeader(x2,y2)&&middle(x1,y1,x2,y2)===0));
+        if(name==="帅")return (((x2>=3&&x2<=5)&&(y2>=7&&y2<=9)&&((Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) || (Math.abs(y1 - y2) === 1 && Math.abs(x1 - x2) === 0)))||(x1===x2&&isHeader(x2,y2)&&middle(x1,y1,x2,y2)===0) );
+        if(name==="将") return (((x2>=3&&x2<=5)&&(y2>=0&&y2<=2)&&((Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) || (Math.abs(y1 - y2) === 1 && Math.abs(x1 - x2) === 0))) || (x1===x2&&isHeader(x2,y2)&&middle(x1,y1,x2,y2)===0));
         if(name==="士") return ((x2>=3&&x2<=5)&&(y2>=0&&y2<=2)&&(Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 1))
         if(name==="仕") return ((x2>=3&&x2<=5)&&(y2>=7&&y2<=9)&&(Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 1))
         if(name==="相")return ((y2>=5&&y2<=9)&&(Math.abs(x1 - x2) === 2 && Math.abs(y1 - y2) === 2)&&middle(x1,y1,x2,y2)===0)
