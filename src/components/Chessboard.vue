@@ -15,7 +15,7 @@
     },
     data(){
       return{
-        chessStatus:"0919293949596979891777062646668600102030405060708012720323436383",
+        chessStatus:"8979695949392919097717866646260680706050403020100072128363432303",
         chessList:[],
         operation:"",
         turn:"red" , //轮到谁
@@ -83,10 +83,6 @@
                   }
                   else if(this.turn==='black'){    //玩家手动帮黑棋下，调用api让机器学习动作
                     this.turn = "red"
-                  //   //==================请求的格式错了，不能用form data
-                  //   // let form = new FormData()
-                  //   // form.set('state',this.chessStatus)
-                  //   // form.set('move',this.operation)
                     axios.post('/chess/'+tmpChessStatus+'/'+tmpOperation)
                   }
                   else if(this.isOver){
@@ -199,8 +195,8 @@
               return true
           }
           return false
-        }
-        if(name==="帅")return (((x2>=3&&x2<=5)&&(y2>=7&&y2<=9)&&((Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) || (Math.abs(y1 - y2) === 1 && Math.abs(x1 - x2) === 0)))||(x1===x2&&isHeader(x2,y2)&&middle(x1,y1,x2,y2)===0) );
+        }``
+        if(name==="帅") return (((x2>=3&&x2<=5)&&(y2>=7&&y2<=9)&&((Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) || (Math.abs(y1 - y2) === 1 && Math.abs(x1 - x2) === 0)))||(x1===x2&&isHeader(x2,y2)&&middle(x1,y1,x2,y2)===0) );
         if(name==="将") return (((x2>=3&&x2<=5)&&(y2>=0&&y2<=2)&&((Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) || (Math.abs(y1 - y2) === 1 && Math.abs(x1 - x2) === 0))) || (x1===x2&&isHeader(x2,y2)&&middle(x1,y1,x2,y2)===0));
         if(name==="士") return ((x2>=3&&x2<=5)&&(y2>=0&&y2<=2)&&(Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 1))
         if(name==="仕") return ((x2>=3&&x2<=5)&&(y2>=7&&y2<=9)&&(Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 1))
